@@ -1,0 +1,304 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>ContractFlow — AI-Assisted Contract Lifecycle Management for Real Estate</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<style>
+  :root {
+    --bg: #f6f7fb; --card: #ffffff; --ink: #1c2333; --muted: #6b7280;
+    --brand: #2749c9; --brand-soft: #e8edfc; --green: #14804a; --green-soft: #e1f4ea;
+    --amber: #a15c07; --amber-soft: #fdf0d9; --red: #b42318; --red-soft: #fde8e6;
+    --violet: #5b3db8; --violet-soft: #efeafc; --border: #e5e7eb;
+  }
+  * { box-sizing: border-box; margin: 0; }
+  body { font-family: "Segoe UI", system-ui, -apple-system, sans-serif; background: var(--bg); color: var(--ink); }
+  header { background: var(--card); border-bottom: 1px solid var(--border); padding: 14px 28px; display: flex; align-items: center; gap: 14px; position: sticky; top: 0; z-index: 5; }
+  header .logo { width: 34px; height: 34px; border-radius: 8px; background: var(--brand); color: #fff; display: grid; place-items: center; font-weight: 700; }
+  header h1 { font-size: 18px; }
+  header .sub { color: var(--muted); font-size: 13px; }
+  nav { margin-left: auto; display: flex; gap: 6px; }
+  nav button { border: 1px solid transparent; background: none; padding: 8px 14px; border-radius: 8px; font-size: 14px; cursor: pointer; color: var(--muted); }
+  nav button.active { background: var(--brand-soft); color: var(--brand); font-weight: 600; }
+  main { max-width: 1180px; margin: 24px auto; padding: 0 20px; }
+  .kpis { display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 14px; margin-bottom: 22px; }
+  .kpi { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 16px 18px; }
+  .kpi .label { color: var(--muted); font-size: 13px; }
+  .kpi .value { font-size: 28px; font-weight: 700; margin-top: 4px; }
+  .kpi .delta { font-size: 12px; margin-top: 4px; }
+  .delta.up { color: var(--green); } .delta.down { color: var(--red); }
+  .panel { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 20px; margin-bottom: 22px; }
+  .panel h2 { font-size: 16px; margin-bottom: 14px; display: flex; align-items: center; justify-content: space-between; }
+  table { width: 100%; border-collapse: collapse; font-size: 14px; }
+  th { text-align: left; color: var(--muted); font-weight: 600; font-size: 12px; text-transform: uppercase; letter-spacing: .04em; padding: 8px 10px; border-bottom: 1px solid var(--border); }
+  td { padding: 11px 10px; border-bottom: 1px solid var(--border); }
+  tr.row { cursor: pointer; } tr.row:hover { background: var(--brand-soft); }
+  .pill { display: inline-block; padding: 3px 10px; border-radius: 999px; font-size: 12px; font-weight: 600; }
+  .pill.Draft { background: #eef0f4; color: var(--muted); }
+  .pill.Review { background: var(--amber-soft); color: var(--amber); }
+  .pill.Signature { background: var(--violet-soft); color: var(--violet); }
+  .pill.Executed { background: var(--green-soft); color: var(--green); }
+  .risk-high { color: var(--red); font-weight: 600; } .risk-med { color: var(--amber); font-weight: 600; } .risk-low { color: var(--green); font-weight: 600; }
+  .controls { display: flex; gap: 10px; margin-bottom: 14px; flex-wrap: wrap; }
+  select, input[type=text] { padding: 8px 10px; border: 1px solid var(--border); border-radius: 8px; font-size: 14px; background: #fff; }
+  .btn { background: var(--brand); color: #fff; border: none; padding: 9px 16px; border-radius: 8px; font-size: 14px; font-weight: 600; cursor: pointer; }
+  .btn.secondary { background: #fff; color: var(--brand); border: 1px solid var(--brand); }
+  .btn:disabled { opacity: .5; cursor: not-allowed; }
+  .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 22px; }
+  @media (max-width: 860px) { .grid2 { grid-template-columns: 1fr; } }
+  /* modal */
+  .overlay { position: fixed; inset: 0; background: rgba(15,23,42,.45); display: none; place-items: center; z-index: 10; padding: 20px; }
+  .overlay.open { display: grid; }
+  .modal { background: #fff; border-radius: 14px; max-width: 720px; width: 100%; max-height: 88vh; overflow-y: auto; padding: 26px; }
+  .modal h3 { font-size: 18px; margin-bottom: 4px; }
+  .modal .meta { color: var(--muted); font-size: 13px; margin-bottom: 18px; }
+  .stepper { display: flex; margin: 18px 0 22px; }
+  .step { flex: 1; text-align: center; position: relative; font-size: 12px; color: var(--muted); }
+  .step .dot { width: 26px; height: 26px; margin: 0 auto 6px; border-radius: 50%; background: #eef0f4; display: grid; place-items: center; font-size: 12px; font-weight: 700; color: var(--muted); border: 2px solid var(--border); }
+  .step.done .dot { background: var(--green); border-color: var(--green); color: #fff; }
+  .step.current .dot { background: var(--brand); border-color: var(--brand); color: #fff; }
+  .step::after { content: ""; position: absolute; top: 13px; left: 50%; width: 100%; height: 2px; background: var(--border); z-index: -1; }
+  .step:last-child::after { display: none; }
+  .ai-box { background: var(--violet-soft); border: 1px solid #d8ccf5; border-radius: 10px; padding: 14px 16px; margin: 14px 0; font-size: 14px; }
+  .ai-box h4 { color: var(--violet); font-size: 13px; margin-bottom: 8px; }
+  .ai-box ul { padding-left: 18px; } .ai-box li { margin-bottom: 5px; }
+  .sig-row { display: flex; align-items: center; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid var(--border); font-size: 14px; }
+  .sig-signed { color: var(--green); font-weight: 600; font-style: italic; }
+  .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  .form-grid label { font-size: 13px; color: var(--muted); display: block; margin-bottom: 4px; }
+  .form-grid input, .form-grid select { width: 100%; }
+  .footer-note { text-align: center; color: var(--muted); font-size: 12px; margin: 30px 0; }
+  canvas { max-height: 280px; }
+  .toast { position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%); background: var(--ink); color: #fff; padding: 10px 20px; border-radius: 8px; font-size: 14px; opacity: 0; transition: opacity .3s; z-index: 20; }
+  .toast.show { opacity: 1; }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">CF</div>
+  <div>
+    <h1>ContractFlow</h1>
+    <div class="sub">AI-assisted contract lifecycle &amp; e-signature workflows for real estate</div>
+  </div>
+  <nav>
+    <button id="nav-dash" class="active" onclick="showView('dash')">Dashboard</button>
+    <button id="nav-analytics" onclick="showView('analytics')">Analytics</button>
+  </nav>
+</header>
+
+<main>
+  <div id="view-dash">
+    <div class="kpis" id="kpis"></div>
+    <div class="panel">
+      <h2>Contract Portfolio <button class="btn" onclick="openNew()">+ New Contract</button></h2>
+      <div class="controls">
+        <input type="text" id="search" placeholder="Search contracts or parties…" oninput="renderTable()" />
+        <select id="filter-status" onchange="renderTable()">
+          <option value="">All statuses</option>
+          <option>Draft</option><option>Review</option><option>Signature</option><option>Executed</option>
+        </select>
+        <select id="filter-type" onchange="renderTable()">
+          <option value="">All types</option>
+          <option>Commercial Lease</option><option>Purchase Agreement</option><option>Property Management</option><option>Vendor Services</option><option>Lease Renewal</option>
+        </select>
+      </div>
+      <table>
+        <thead><tr><th>Contract</th><th>Type</th><th>Counterparty</th><th>Value</th><th>Status</th><th>AI Risk</th><th>Days in Stage</th></tr></thead>
+        <tbody id="tbody"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <div id="view-analytics" style="display:none">
+    <div class="grid2">
+      <div class="panel"><h2>Pipeline by Stage</h2><canvas id="chart-funnel"></canvas></div>
+      <div class="panel"><h2>Avg. Cycle Time by Contract Type (days)</h2><canvas id="chart-cycle"></canvas></div>
+    </div>
+    <div class="panel"><h2>Executed Contracts — Trailing 6 Months</h2><canvas id="chart-trend"></canvas></div>
+  </div>
+</main>
+
+<!-- Contract detail modal -->
+<div class="overlay" id="detail-overlay" onclick="if(event.target===this)closeDetail()">
+  <div class="modal" id="detail-modal"></div>
+</div>
+
+<!-- New contract modal -->
+<div class="overlay" id="new-overlay" onclick="if(event.target===this)closeNew()">
+  <div class="modal">
+    <h3>New Contract</h3>
+    <div class="meta">Contracts start in Draft and move through Review → Signature → Executed.</div>
+    <div class="form-grid">
+      <div><label>Contract name</label><input type="text" id="n-name" placeholder="e.g., Suite 400 Office Lease" /></div>
+      <div><label>Type</label><select id="n-type"><option>Commercial Lease</option><option>Purchase Agreement</option><option>Property Management</option><option>Vendor Services</option><option>Lease Renewal</option></select></div>
+      <div><label>Counterparty</label><input type="text" id="n-party" placeholder="e.g., Beacon Holdings LLC" /></div>
+      <div><label>Value (USD)</label><input type="text" id="n-value" placeholder="e.g., 250000" /></div>
+    </div>
+    <div style="margin-top:18px; display:flex; gap:10px; justify-content:flex-end">
+      <button class="btn secondary" onclick="closeNew()">Cancel</button>
+      <button class="btn" onclick="createContract()">Create &amp; Run AI Review</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<footer class="footer-note">ContractFlow is a product prototype built as a PM portfolio project. All data is simulated in-browser; no backend, no real signatures.</footer>
+
+<script>
+const STAGES = ["Draft", "Review", "Signature", "Executed"];
+const STAGE_LABEL = { Draft: "Draft", Review: "Internal Review", Signature: "Out for Signature", Executed: "Executed" };
+
+// ---------- Seed data ----------
+let contracts = [
+  { id: 1, name: "Harborview Tower — Floor 12 Lease", type: "Commercial Lease", party: "Meridian Capital Group", value: 1840000, status: "Signature", days: 3,
+    signers: [ {name:"J. Alvarez (Landlord)", signed:true}, {name:"P. Okafor (Tenant)", signed:false} ] },
+  { id: 2, name: "Elm Street Portfolio Purchase", type: "Purchase Agreement", party: "Beacon Holdings LLC", value: 5200000, status: "Review", days: 6,
+    signers: [ {name:"Seller rep", signed:false}, {name:"Buyer rep", signed:false} ] },
+  { id: 3, name: "Lakeside Apartments Mgmt. Agreement", type: "Property Management", party: "Cedar Ridge Partners", value: 96000, status: "Executed", days: 0,
+    signers: [ {name:"Owner", signed:true}, {name:"Manager", signed:true} ] },
+  { id: 4, name: "HVAC Maintenance — Westgate Plaza", type: "Vendor Services", party: "Titan Mechanical Inc.", value: 48000, status: "Draft", days: 2,
+    signers: [ {name:"Property manager", signed:false}, {name:"Vendor", signed:false} ] },
+  { id: 5, name: "Suite 210 Lease Renewal", type: "Lease Renewal", party: "Nova Analytics Co.", value: 132000, status: "Signature", days: 1,
+    signers: [ {name:"Landlord", signed:true}, {name:"Tenant", signed:false} ] },
+  { id: 6, name: "Riverside Retail Ground Lease", type: "Commercial Lease", party: "Stonebridge Retail Trust", value: 2450000, status: "Review", days: 9,
+    signers: [ {name:"Lessor", signed:false}, {name:"Lessee", signed:false} ] },
+  { id: 7, name: "Parking Structure Services", type: "Vendor Services", party: "MetroPark Solutions", value: 61000, status: "Executed", days: 0,
+    signers: [ {name:"Owner rep", signed:true}, {name:"Vendor", signed:true} ] },
+  { id: 8, name: "Oak Grove Duplex Purchase", type: "Purchase Agreement", party: "Hartwell Family Trust", value: 780000, status: "Draft", days: 4,
+    signers: [ {name:"Seller", signed:false}, {name:"Buyer", signed:false} ] },
+];
+let nextId = 9;
+
+// ---------- Mock AI clause analysis (rule-based, deterministic) ----------
+function aiAnalysis(c) {
+  const flags = [];
+  if (c.value >= 1000000) flags.push("High contract value — recommend legal review of indemnification and limitation-of-liability clauses.");
+  if (c.type === "Commercial Lease") flags.push("CAM (common area maintenance) escalation clause detected — cap not specified; benchmark peer leases at 3–5% annual cap.");
+  if (c.type === "Purchase Agreement") flags.push("Due-diligence contingency window is 21 days — shorter than the 30-day market standard for this asset class.");
+  if (c.type === "Vendor Services") flags.push("Auto-renewal clause present with 90-day notice requirement — flag for renewal calendar.");
+  if (c.type === "Lease Renewal") flags.push("Rent escalation of 4.2% exceeds portfolio average of 3.1% — verify against market comps.");
+  if (c.type === "Property Management") flags.push("Termination-for-convenience requires 120-day notice — longer than the 60-day portfolio standard.");
+  if (c.days > 5) flags.push(`Contract has been in ${STAGE_LABEL[c.status]} for ${c.days} days — exceeds stage SLA. Suggested action: automated reminder to approvers.`);
+  const risk = c.value >= 2000000 || flags.length >= 3 ? "High" : c.value >= 500000 || flags.length === 2 ? "Medium" : "Low";
+  return { risk, flags: flags.length ? flags : ["No material deviations from standard templates detected."] };
+}
+
+// ---------- KPIs ----------
+function renderKPIs() {
+  const inFlight = contracts.filter(c => c.status !== "Executed").length;
+  const pendingSig = contracts.filter(c => c.status === "Signature").length;
+  const executed = contracts.filter(c => c.status === "Executed").length;
+  const totalValue = contracts.filter(c => c.status !== "Executed").reduce((s, c) => s + c.value, 0);
+  document.getElementById("kpis").innerHTML = `
+    <div class="kpi"><div class="label">Contracts in flight</div><div class="value">${inFlight}</div><div class="delta up">▲ 12% vs. last month</div></div>
+    <div class="kpi"><div class="label">Awaiting signature</div><div class="value">${pendingSig}</div><div class="delta down">▼ 2 blocked &gt; 48h</div></div>
+    <div class="kpi"><div class="label">Executed (this qtr)</div><div class="value">${executed + 14}</div><div class="delta up">▲ 8% vs. last qtr</div></div>
+    <div class="kpi"><div class="label">Pipeline value</div><div class="value">$${(totalValue/1e6).toFixed(1)}M</div><div class="delta up">▲ $1.2M added this week</div></div>`;
+}
+
+// ---------- Table ----------
+function renderTable() {
+  const q = document.getElementById("search").value.toLowerCase();
+  const fs = document.getElementById("filter-status").value;
+  const ft = document.getElementById("filter-type").value;
+  const rows = contracts.filter(c =>
+    (!q || c.name.toLowerCase().includes(q) || c.party.toLowerCase().includes(q)) &&
+    (!fs || c.status === fs) && (!ft || c.type === ft));
+  document.getElementById("tbody").innerHTML = rows.map(c => {
+    const a = aiAnalysis(c);
+    return `<tr class="row" onclick="openDetail(${c.id})">
+      <td><strong>${c.name}</strong></td><td>${c.type}</td><td>${c.party}</td>
+      <td>$${c.value.toLocaleString()}</td>
+      <td><span class="pill ${c.status}">${STAGE_LABEL[c.status]}</span></td>
+      <td class="risk-${a.risk.toLowerCase().slice(0,4).replace('medi','med')}">${a.risk}</td>
+      <td>${c.status === "Executed" ? "—" : c.days}</td></tr>`;
+  }).join("") || `<tr><td colspan="7" style="color:var(--muted)">No contracts match your filters.</td></tr>`;
+}
+
+// ---------- Detail modal ----------
+function openDetail(id) {
+  const c = contracts.find(x => x.id === id);
+  const a = aiAnalysis(c);
+  const idx = STAGES.indexOf(c.status);
+  const stepper = STAGES.map((s, i) =>
+    `<div class="step ${i < idx || c.status === "Executed" ? "done" : i === idx ? "current" : ""}">
+       <div class="dot">${i < idx || c.status === "Executed" ? "✓" : i + 1}</div>${STAGE_LABEL[s]}</div>`).join("");
+  const signers = c.signers.map((s, i) =>
+    `<div class="sig-row"><span>${s.name}</span>
+       ${s.signed ? `<span class="sig-signed">✓ Signed electronically</span>`
+         : c.status === "Signature" ? `<button class="btn secondary" onclick="sign(${c.id},${i})">Simulate e-signature</button>`
+         : `<span style="color:var(--muted)">Awaiting signature stage</span>`}</div>`).join("");
+  const advanceBtn = c.status === "Executed" ? "" :
+    c.status === "Signature"
+      ? `<button class="btn" ${c.signers.every(s=>s.signed) ? "" : "disabled title='All parties must sign first'"} onclick="advance(${c.id})">Mark Executed</button>`
+      : `<button class="btn" onclick="advance(${c.id})">Advance to ${STAGE_LABEL[STAGES[idx+1]]}</button>`;
+  document.getElementById("detail-modal").innerHTML = `
+    <h3>${c.name}</h3>
+    <div class="meta">${c.type} · ${c.party} · $${c.value.toLocaleString()}</div>
+    <div class="stepper">${stepper}</div>
+    <div class="ai-box"><h4>⚡ AI Clause Review — Risk: ${a.risk}</h4><ul>${a.flags.map(f=>`<li>${f}</li>`).join("")}</ul></div>
+    <h4 style="margin:16px 0 4px">Signature Status</h4>${signers}
+    <div style="margin-top:20px; display:flex; gap:10px; justify-content:flex-end">
+      <button class="btn secondary" onclick="closeDetail()">Close</button>${advanceBtn}</div>`;
+  document.getElementById("detail-overlay").classList.add("open");
+}
+function closeDetail() { document.getElementById("detail-overlay").classList.remove("open"); }
+function sign(id, i) {
+  contracts.find(c => c.id === id).signers[i].signed = true;
+  toast("Signature captured (simulated envelope event)"); openDetail(id); refresh();
+}
+function advance(id) {
+  const c = contracts.find(x => x.id === id);
+  const idx = STAGES.indexOf(c.status);
+  if (idx < STAGES.length - 1) { c.status = STAGES[idx + 1]; c.days = 0; }
+  toast(`Moved to ${STAGE_LABEL[c.status]}`); openDetail(id); refresh();
+}
+
+// ---------- New contract ----------
+function openNew() { document.getElementById("new-overlay").classList.add("open"); }
+function closeNew() { document.getElementById("new-overlay").classList.remove("open"); }
+function createContract() {
+  const name = document.getElementById("n-name").value.trim();
+  const party = document.getElementById("n-party").value.trim();
+  const value = parseInt(document.getElementById("n-value").value.replace(/[^0-9]/g, ""), 10) || 0;
+  if (!name || !party) { toast("Name and counterparty are required"); return; }
+  const c = { id: nextId++, name, party, value, type: document.getElementById("n-type").value,
+    status: "Draft", days: 0, signers: [{name:"Party A", signed:false},{name:"Party B", signed:false}] };
+  contracts.unshift(c); closeNew(); refresh(); openDetail(c.id);
+  toast("Contract created — AI review complete");
+}
+
+// ---------- Analytics ----------
+let charts = {};
+function renderCharts() {
+  const byStage = STAGES.map(s => contracts.filter(c => c.status === s).length);
+  const types = ["Commercial Lease","Purchase Agreement","Property Management","Vendor Services","Lease Renewal"];
+  const cycle = [24, 38, 17, 9, 12];
+  const months = ["Feb","Mar","Apr","May","Jun","Jul"];
+  const executedTrend = [4, 6, 5, 8, 9, 11];
+  const mk = (id, cfg) => { if (charts[id]) charts[id].destroy(); charts[id] = new Chart(document.getElementById(id), cfg); };
+  mk("chart-funnel", { type: "bar", data: { labels: STAGES.map(s=>STAGE_LABEL[s]), datasets: [{ data: byStage, backgroundColor: ["#9aa3b2","#e8a33d","#7c5cd6","#2ca86b"] }] }, options: { plugins:{legend:{display:false}} } });
+  mk("chart-cycle", { type: "bar", data: { labels: types, datasets: [{ data: cycle, backgroundColor: "#2749c9" }] }, options: { indexAxis: "y", plugins:{legend:{display:false}} } });
+  mk("chart-trend", { type: "line", data: { labels: months, datasets: [{ label: "Executed contracts", data: executedTrend, borderColor: "#2749c9", backgroundColor: "rgba(39,73,201,.12)", fill: true, tension: .35 }] }, options: {} });
+}
+
+// ---------- Shell ----------
+function showView(v) {
+  document.getElementById("view-dash").style.display = v === "dash" ? "" : "none";
+  document.getElementById("view-analytics").style.display = v === "analytics" ? "" : "none";
+  document.getElementById("nav-dash").classList.toggle("active", v === "dash");
+  document.getElementById("nav-analytics").classList.toggle("active", v === "analytics");
+  if (v === "analytics") renderCharts();
+}
+function toast(msg) {
+  const t = document.getElementById("toast"); t.textContent = msg; t.classList.add("show");
+  setTimeout(() => t.classList.remove("show"), 2200);
+}
+function refresh() { renderKPIs(); renderTable(); }
+refresh();
+</script>
+</body>
+</html>

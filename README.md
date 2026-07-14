@@ -2,6 +2,8 @@
 
 **AI-assisted contract lifecycle & e-signature workflow management for real estate — a product management portfolio project.**
 
+> **In one breath:** Designed and built ContractFlow, an AI-assisted contract lifecycle management prototype for real estate, featuring automated clause-risk scoring, e-signature workflow orchestration, and portfolio analytics. Backed the prototype with a complete product management suite — PRD, outcome-based roadmap, customer discovery plan, metrics framework, and go-to-market strategy — modeling the full product lifecycle from problem validation to launch.
+
 ContractFlow is an end-to-end product case study: a working prototype plus the full set of PM artifacts behind it — problem discovery, PRD, roadmap, metrics framework, go-to-market plan, and API design. It models how I approach product management for a SaaS platform in the digital transaction management / contract lifecycle management (CLM) space.
 
 ## 🖥️ Live prototype
@@ -31,12 +33,4 @@ The prototype demonstrates the core product loop:
 
 ## Why this domain
 
-Real estate transaction management sits at the intersection of high-value documents, multi-party workflows, and painful status opacity — a space where workflow software plus applied AI creates measurable value (cycle time, risk caught early, renewal deadlines never missed). The artifacts here work through that thesis end to end: from discovery evidence standards, to a north-star metric, to how the platform stays vendor-neutral on e-signature.
-
-## Built with
-
-Vanilla HTML/CSS/JavaScript + [Chart.js](https://www.chartjs.org/) — intentionally dependency-light so the prototype is a single reviewable file. AI-assisted development tooling was used throughout, mirroring modern AI-enabled product workflows.
-
----
-
-*Francis Oluwatobi · oluwatobi.ou@gmail.com*
+Real estate transaction management sits at the intersection of high-value documents, multi-party workflows, and painful status opacity — a space where workflow software plus applied AI creates measurable value (cycle time, risk caught early, renewal deadlines never missed). The artifacts here w

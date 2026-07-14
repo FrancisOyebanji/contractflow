@@ -33,4 +33,12 @@ The prototype demonstrates the core product loop:
 
 ## Why this domain
 
-Real estate transaction management sits at the intersection of high-value documents, multi-party workflows, and painful status opacity — a space where workflow software plus applied AI creates measurable value (cycle time, risk caught early, renewal deadlines never missed). The artifacts here w
+Real estate transaction management sits at the intersection of high-value documents, multi-party workflows, and painful status opacity — a space where workflow software plus applied AI creates measurable value (cycle time, risk caught early, renewal deadlines never missed). The artifacts here work through that thesis end to end: from discovery evidence standards, to a north-star metric, to how the platform stays vendor-neutral on e-signature.
+
+## Built with
+
+Vanilla HTML/CSS/JavaScript + [Chart.js](https://www.chartjs.org/) — intentionally dependency-light so the prototype is a single reviewable file. AI-assisted development tooling was used throughout, mirroring modern AI-enabled product workflows.
+
+---
+
+*Francis Oluwatobi · oluwatobi.ou@gmail.com*
